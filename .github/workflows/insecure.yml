@@ -1,0 +1,39 @@
+name: Pipeline volontairement vulnérable
+
+on:
+  workflow_dispatch:
+
+permissions: write-all
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Récupération du dépôt
+        uses: actions/checkout@main
+
+      - name: Installation de Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Installation des dépendances
+        run: |
+          npm install
+
+      - name: Affichage d'un secret (mauvaise pratique)
+        env:
+          DEMO_SECRET: ${{ secrets.DEMO_SECRET }}
+        run: |
+          echo "Le secret vaut : $DEMO_SECRET"
+
+      - name: Construction Docker
+        run: |
+          docker build -t secure-ci-node:test .
+
+      - name: Fin du pipeline
+        run: |
+          echo "Pipeline terminé."
