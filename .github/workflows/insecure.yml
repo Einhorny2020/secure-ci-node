@@ -25,12 +25,15 @@ jobs:
         run: |
           npm install
 
-      - name: Affichage d'un secret (mauvaise pratique)
+      - name: Vérifier la présence du secret
         env:
-          DEMO_SECRET: ${{ secrets.DEMO_SECRET }}
+            DEMO_SECRET: ${{ secrets.DEMO_SECRET }}
         run: |
-          echo "Le secret vaut : $DEMO_SECRET"
-
+             if [ -z "$DEMO_SECRET" ]; then
+                echo "Le secret est absent."
+                exit 1
+             fi
+             echo "Le secret est bien disponible pour cette étape."
       - name: Construction Docker
         run: |
           docker build -t secure-ci-node:test .
