@@ -11,7 +11,8 @@ const expectedApplicationName = "secure-ci-node";
 
 assert.strictEqual(
   expectedApplicationName,
-  "secure-ci-node",
+  //"secure-ci-node",
+  "mauvais-nom",
   "Le nom de l’application est incorrect"
 );
 
