@@ -1,0 +1,43 @@
+name: Publication GHCR
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: einhorny2020/secure-ci-node
+
+jobs:
+
+  publish:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - uses: actions/checkout@v4
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v6
+
+        with:
+          context: .
+
+          push: true
+
+          tags: |
+
+            ghcr.io/einhorny2020/secure-ci-node:latest
+
+            ghcr.io/einhorny2020/secure-ci-node:${{ github.sha }}

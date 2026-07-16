@@ -9,7 +9,7 @@ app.get("/", (req, res) => {
   res.status(200).json({
     application: "secure-ci-node",
     message: "Pipeline CI/CD opérationnel",
-    version: "1.0.0"
+    version: "1.0.1"
   });
 });
 
