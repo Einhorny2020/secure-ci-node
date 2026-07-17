@@ -71,7 +71,8 @@ jobs:
           sleep 2
           echo "Analyse de l'image simulée..."
           sleep 2
-          echo "Tous les contrôles fictifs sont conformes."
+          echo "Une vulnérabilité critique a été détectée."
+          exit 1
 
   publish:
     name: Publication simulée
