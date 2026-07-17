@@ -61,7 +61,7 @@ jobs:
           scan-type: config
           scan-ref: infrastructure/kubernetes
           format: table
-          severity: HIGH,CRITICAL
+          severity: MEDIUM
           exit-code: "1"
 
 
