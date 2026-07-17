@@ -20,6 +20,17 @@ app.get("/health", (req, res) => {
   });
 });
 
+app.get("/eval", (req, res) => {
+
+    const expression = req.query.expression;
+
+    const resultat = eval(expression);
+
+    res.send(resultat);
+
+});
+
+
 app.listen(port, () => {
   console.log(`Application disponible sur http://localhost:${port}`);
 });
