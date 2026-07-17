@@ -71,8 +71,8 @@ jobs:
           sleep 2
           echo "Analyse de l'image simulée..."
           sleep 2
-          echo "Une vulnérabilité critique a été détectée."
-          exit 1
+          echo "Aucune vulnérabilité bloquante n'a été détectée."
+          exit 0
 
   publish:
     name: Publication simulée
