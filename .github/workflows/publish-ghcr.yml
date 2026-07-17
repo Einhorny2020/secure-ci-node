@@ -1,43 +1,92 @@
-name: Publication GHCR
+name: Préparation du pipeline DevSecOps
 
 on:
   push:
     branches:
       - main
 
+  workflow_dispatch:
+
+concurrency:
+  group: devsecops-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
-  packages: write
-
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: einhorny2020/secure-ci-node
 
 jobs:
-
-  publish:
-
+  test:
+    name: Tests applicatifs
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    permissions:
+      contents: read
 
     steps:
+      - name: Récupérer le code
+        uses: actions/checkout@v4
 
-      - uses: actions/checkout@v4
-
-      - uses: docker/login-action@v3
+      - name: Installer Node.js
+        uses: actions/setup-node@v4
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          node-version: "22"
+          cache: npm
 
-      - uses: docker/build-push-action@v6
+      - name: Installer les dépendances
+        run: npm ci
 
-        with:
-          context: .
+      - name: Exécuter les tests
+        run: npm test
 
-          push: true
+  build:
+    name: Build et contrôle fictif
+    needs:
+      - test
 
-          tags: |
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
 
-            ghcr.io/einhorny2020/secure-ci-node:latest
+    permissions:
+      contents: read
 
-            ghcr.io/einhorny2020/secure-ci-node:${{ github.sha }}
+    steps:
+      - name: Récupérer le code
+        uses: actions/checkout@v4
+
+      - name: Construire l’image Docker
+        run: |
+          docker build \
+            -t secure-ci-node:${{ github.sha }} \
+            .
+
+      - name: Préparer les futurs contrôles de sécurité
+        run: |
+          echo "Démarrage de l'analyse de sécurité..."
+          echo "Analyse SAST simulée..."
+          sleep 2
+          echo "Analyse SCA simulée..."
+          sleep 2
+          echo "Analyse des secrets simulée..."
+          sleep 2
+          echo "Analyse de l'image simulée..."
+          sleep 2
+          echo "Tous les contrôles fictifs sont conformes."
+
+  publish:
+    name: Publication simulée
+    needs:
+      - test
+      - build
+
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Simuler la publication
+        run: |
+          echo "Les tests et les contrôles ont réussi."
+          echo "L'image pourrait maintenant être publiée."
