@@ -20,15 +20,10 @@ app.get("/health", (req, res) => {
   });
 });
 
-app.get("/eval", (req, res) => {
+app.get("/hello",(req,res)=>{
+  res.send("Hello");
+ });
 
-    const expression = req.query.expression;
-
-    const resultat = eval(expression);
-
-    res.send(resultat);
-
-});
 
 
 app.listen(port, () => {
