@@ -39,10 +39,37 @@ jobs:
       - name: Exécuter les tests
         run: npm test
 
+  infrastructure_security:
+    name: Sécurité Infrastructure as Code
+
+    needs:
+      - test
+
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Récupérer le code
+        uses: actions/checkout@v4
+
+      - name: Scanner les manifestes Kubernetes
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: config
+          scan-ref: infrastructure/kubernetes
+          format: table
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+
+
   build:
     name: Build et contrôle fictif
     needs:
       - test
+      - infrastructure_security
 
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -71,13 +98,14 @@ jobs:
           sleep 2
           echo "Analyse de l'image simulée..."
           sleep 2
-          echo "Aucune vulnérabilité bloquante n'a été détectée."
+          echo "Aucune vulnérabilité bloquante et contrôle IaC Conforme."
           exit 0
 
   publish:
     name: Publication simulée
     needs:
       - test
+      - infrastructure_security
       - build
 
     runs-on: ubuntu-latest
@@ -89,5 +117,7 @@ jobs:
     steps:
       - name: Simuler la publication
         run: |
-          echo "Les tests et les contrôles ont réussi."
+          echo "Les tests sont conformes."
+          echo "Le manifeste Kubernetes est conforme."
           echo "L'image pourrait maintenant être publiée."
+
