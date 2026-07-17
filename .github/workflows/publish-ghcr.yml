@@ -1,4 +1,4 @@
-name: Préparation du pipeline DevSecOps
+name: Pipeline DevSecOps
 
 on:
   push:
@@ -15,22 +15,29 @@ permissions:
   contents: read
 
 jobs:
+
+###########################################################
+# TESTS
+###########################################################
+
   test:
+
     name: Tests applicatifs
+
     runs-on: ubuntu-latest
-    timeout-minutes: 10
 
     permissions:
       contents: read
 
     steps:
-      - name: Récupérer le code
+
+      - name: Récupérer le dépôt
         uses: actions/checkout@v4
 
       - name: Installer Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: 22
           cache: npm
 
       - name: Installer les dépendances
@@ -39,85 +46,100 @@ jobs:
       - name: Exécuter les tests
         run: npm test
 
-  infrastructure_security:
-    name: Sécurité Infrastructure as Code
+###########################################################
+# ANALYSE SCA
+###########################################################
+
+  sca:
+
+    name: Analyse SCA avec Trivy
 
     needs:
       - test
 
     runs-on: ubuntu-latest
-    timeout-minutes: 10
 
     permissions:
       contents: read
 
     steps:
-      - name: Récupérer le code
+
+      - name: Récupérer le dépôt
         uses: actions/checkout@v4
 
-      - name: Scanner les manifestes Kubernetes
+      - name: Analyse des dépendances
         uses: aquasecurity/trivy-action@v0.36.0
         with:
-          scan-type: config
-          scan-ref: infrastructure/kubernetes
-          format: table
-          severity: MEDIUM
+          scan-type: fs
+          scan-ref: .
+          severity: HIGH,CRITICAL
           exit-code: "1"
+          format: table
 
+###########################################################
+# BUILD
+###########################################################
 
   build:
-    name: Build et contrôle fictif
+
+    name: Construction Docker
+
     needs:
       - test
-      - infrastructure_security
+      - sca
 
     runs-on: ubuntu-latest
-    timeout-minutes: 15
 
     permissions:
       contents: read
 
     steps:
-      - name: Récupérer le code
+
+      - name: Récupérer le dépôt
         uses: actions/checkout@v4
 
-      - name: Construire l’image Docker
+      - name: Construire l'image Docker
         run: |
           docker build \
-            -t secure-ci-node:${{ github.sha }} \
-            .
+          -t secure-ci-node:${{ github.sha }} \
+          .
 
-      - name: Préparer les futurs contrôles de sécurité
-        run: |
-          echo "Démarrage de l'analyse de sécurité..."
-          echo "Analyse SAST simulée..."
-          sleep 2
-          echo "Analyse SCA simulée..."
-          sleep 2
-          echo "Analyse des secrets simulée..."
-          sleep 2
-          echo "Analyse de l'image simulée..."
-          sleep 2
-          echo "Aucune vulnérabilité bloquante et contrôle IaC Conforme."
-          exit 0
+###########################################################
+# PUBLICATION
+###########################################################
 
   publish:
-    name: Publication simulée
+
+    name: Publication GHCR
+
     needs:
       - test
-      - infrastructure_security
+      - sca
       - build
 
     runs-on: ubuntu-latest
-    timeout-minutes: 5
 
     permissions:
       contents: read
+      packages: write
 
     steps:
-      - name: Simuler la publication
-        run: |
-          echo "Les tests sont conformes."
-          echo "Le manifeste Kubernetes est conforme."
-          echo "L'image pourrait maintenant être publiée."
 
+      - name: Récupérer le dépôt
+        uses: actions/checkout@v4
+
+      - name: Connexion GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Construction et publication
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/secure-ci-node:latest
+            ghcr.io/${{ github.repository_owner }}/secure-ci-node:${{ github.sha }}
