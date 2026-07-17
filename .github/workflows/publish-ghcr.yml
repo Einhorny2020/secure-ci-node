@@ -47,6 +47,42 @@ jobs:
         run: npm test
 
 ###########################################################
+# Détection des secrets
+###########################################################
+  secret_scan:
+
+    name: Détection des secrets
+
+    needs:
+
+        test
+
+    runs-on: ubuntu-latest
+
+    permissions:
+
+        contents: read
+
+    steps:
+
+    - uses: actions/checkout@v4
+
+    - name: Secret Scan
+
+      uses: aquasecurity/trivy-action@0.28.0
+
+      with:
+
+          scan-type: fs
+
+          scan-ref: .
+
+          scanners: secret
+
+          exit-code: '1'
+
+
+###########################################################
 # ANALYSE SCA
 ###########################################################
 
